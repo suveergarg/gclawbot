@@ -1,0 +1,42 @@
+services:
+  ollama:
+    image: ollama/ollama
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - openclaw_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  openclaw:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18789:18789"
+    volumes:
+      - openclaw_home:/home/node
+      - ./openclaw.json:/home/node/openclaw.json:ro
+    environment:
+      - OPENCLAW_HOME_VOLUME=1
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+    networks:
+      - openclaw_net
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  openclaw_home:
+
+networks:
+  openclaw_net:
+    driver: bridge
