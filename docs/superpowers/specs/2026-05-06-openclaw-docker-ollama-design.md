@@ -72,6 +72,8 @@ Gateway token added by OpenClaw setup script on first run.
   channels: {
     telegram: {
       token: "<BOTFATHER_TOKEN>",
+      dmPolicy: "allowlist",
+      allowFrom: ["<YOUR_TELEGRAM_USER_ID>"],  // find via: openclaw logs --follow after first DM
     },
   },
   agents: {
