@@ -29,10 +29,13 @@ Do not proceed further.
 
 Monitor these repositories unless the user specifies otherwise:
 
-- `OWNER/REPO`
-- `OWNER/REPO2`
+- `borglab/gtsam` (fork: `suveergarg/gtsam`)
 
 Add or remove entries here to change which repos are monitored.
+
+## GitHub username
+
+`suveergarg` — use this as `suveergarg` in all fork and PR commands.
 
 ## Step 1 — Check pending PR backlog
 
@@ -110,7 +113,7 @@ Work in /tmp to avoid polluting the workspace:
 ```bash
 cd /tmp
 rm -rf REPO
-gh repo clone YOUR_USERNAME/REPO
+gh repo clone suveergarg/REPO
 cd REPO
 git remote add upstream https://github.com/OWNER/REPO.git
 git fetch upstream
@@ -182,7 +185,7 @@ git push origin fix/issue-NUMBER-short-slug
 ```bash
 gh pr create \
   --repo OWNER/REPO \
-  --head YOUR_USERNAME:fix/issue-NUMBER-short-slug \
+  --head suveergarg:fix/issue-NUMBER-short-slug \
   --title "fix: brief description (#NUMBER)" \
   --body "$(cat <<'EOF'
 ## Summary
