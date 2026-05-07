@@ -34,7 +34,27 @@ Monitor these repositories unless the user specifies otherwise:
 
 Add or remove entries here to change which repos are monitored.
 
-## Step 1 — Fetch open issues
+## Step 1 — Check pending PR backlog
+
+Before fetching issues, count open PRs already submitted by this skill across all configured repos:
+
+```bash
+gh pr list --repo OWNER/REPO --state open --author "@me" --json number,title,url
+```
+
+Run for each configured repo and sum the total open PRs.
+
+**Limit: 3 open PRs maximum.** If total open PRs ≥ 3, notify the user and stop:
+
+> 🔁 Skipping tonight — **N open PRs** are still pending review:
+> - #123 fix: description (OWNER/REPO)
+> - #456 fix: description (OWNER/REPO2)
+>
+> Review and merge (or close) some before new ones are opened.
+
+Do not proceed further.
+
+## Step 3 — Fetch open issues
 
 For each repository:
 ```bash
@@ -46,7 +66,7 @@ If no label filter returns results, try without labels:
 gh issue list --repo OWNER/REPO --state open --json number,title,body,labels,comments --limit 20
 ```
 
-## Step 2 — Filter already-processed issues
+## Step 4 — Filter already-processed issues
 
 Check memory for previously attempted issues. Skip any issue where memory contains an entry like:
 `github-issue-fixer: OWNER/REPO#NUMBER`
@@ -61,7 +81,7 @@ Do not proceed further.
 
 Tell the user: which issue you picked and why.
 
-## Step 3 — Read the issue fully
+## Step 5 — Read the issue fully
 
 ```bash
 gh issue view NUMBER --repo OWNER/REPO --comments
@@ -72,7 +92,7 @@ Read all comments. Understand:
 - Where in the codebase the problem likely lives
 - Whether there are reproduction steps
 
-## Step 4 — Set up fork
+## Step 6 — Set up fork
 
 Check if fork already exists:
 ```bash
@@ -84,7 +104,7 @@ If fork does not exist, create it:
 gh repo fork OWNER/REPO --clone=false
 ```
 
-## Step 5 — Clone and branch
+## Step 7 — Clone and branch
 
 Work in /tmp to avoid polluting the workspace:
 ```bash
@@ -99,7 +119,7 @@ git checkout upstream/main -b fix/issue-NUMBER-short-slug
 
 Replace `main` with the upstream default branch if different (check with `gh repo view OWNER/REPO --json defaultBranchRef`).
 
-## Step 6 — Explore the codebase
+## Step 8 — Explore the codebase
 
 Before editing, understand the structure:
 ```bash
@@ -112,7 +132,7 @@ Read relevant files based on the issue description. Use openshell to read files:
 cat path/to/relevant/file
 ```
 
-## Step 7 — Fix the issue
+## Step 9 — Fix the issue
 
 Make targeted, minimal changes. Only touch files directly related to the issue.
 
@@ -137,7 +157,7 @@ make test   # or npm test, pytest, cargo test, go test ./...
 
 If tests fail due to your change, fix the issue or choose a different approach. Do NOT proceed with failing tests.
 
-## Step 8 — Commit
+## Step 10 — Commit
 
 Stage only files you intentionally changed:
 ```bash
@@ -151,13 +171,13 @@ Commit message format:
 - Keep subject under 72 chars
 - Add body if the fix is non-obvious
 
-## Step 9 — Push to fork
+## Step 11 — Push to fork
 
 ```bash
 git push origin fix/issue-NUMBER-short-slug
 ```
 
-## Step 10 — Open PR
+## Step 12 — Open PR
 
 ```bash
 gh pr create \
@@ -186,7 +206,7 @@ EOF
 )"
 ```
 
-## Step 11 — Record in memory
+## Step 13 — Record in memory
 
 Save to memory so this issue is not re-attempted:
 ```
