@@ -5,3 +5,4 @@ openclaw.json
 scripts/
 *.log
 .DS_Store
+data/
