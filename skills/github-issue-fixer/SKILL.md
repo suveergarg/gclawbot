@@ -16,14 +16,23 @@ git config --global user.name
 git config --global user.email
 ```
 
-If `gh` is not authenticated, stop and ask the user to run:
-```bash
-gh auth login
-```
+If `gh auth status` fails or returns an auth error, notify the user immediately and stop:
+
+> ⚠️ GitHub auth expired. Run this to fix:
+> ```
+> docker compose -f /path/to/gclawbot/docker-compose.yml exec -it openclaw gh auth refresh
+> ```
+
+Do not proceed further.
 
 ## Configured repositories
 
-Ask the user which repositories to monitor if not already told. Format: `OWNER/REPO` (e.g. `torvalds/linux`).
+Monitor these repositories unless the user specifies otherwise:
+
+- `OWNER/REPO`
+- `OWNER/REPO2`
+
+Add or remove entries here to change which repos are monitored.
 
 ## Step 1 — Fetch open issues
 
@@ -43,6 +52,12 @@ Check memory for previously attempted issues. Skip any issue where memory contai
 `github-issue-fixer: OWNER/REPO#NUMBER`
 
 Pick the first unprocessed issue that looks fixable (clear description, bounded scope, not a feature request requiring major design decisions).
+
+If no fixable issues found across all configured repos, notify the user and stop:
+
+> 💤 No actionable issues found tonight across configured repos. All open issues are either already attempted, feature requests, or require design decisions beyond scope.
+
+Do not proceed further.
 
 Tell the user: which issue you picked and why.
 
