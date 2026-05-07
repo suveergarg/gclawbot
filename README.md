@@ -1,6 +1,10 @@
 # gclawbot
 
-AI agent bot running OpenClaw + Ollama (qwen2.5:7b) on GPU, connected to Telegram.
+AI agent bot running OpenClaw + Ollama on GPU, connected to Telegram.
+
+**Models:**
+- `deepseek-r1:14b` — default for conversations (16k context)
+- `qwen2.5-coder:14b` — used by github-issue-fixer skill (16k context)
 
 ## Requirements
 
@@ -29,11 +33,18 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-### 3. Start Ollama and pull model (~5GB, one-time)
+### 3. Start Ollama and pull models (~18GB total, one-time)
 
 ```bash
 docker compose up -d ollama
-docker compose exec ollama ollama pull qwen2.5:7b
+
+# Pull base models
+docker compose exec ollama ollama pull deepseek-r1:14b
+docker compose exec ollama ollama pull qwen2.5-coder:14b
+
+# Create 16k context variants
+docker compose exec ollama bash -c 'printf "FROM deepseek-r1:14b\nPARAMETER num_ctx 16384\n" > /tmp/Mf && ollama create deepseek-r1:14b-16k -f /tmp/Mf'
+docker compose exec ollama bash -c 'printf "FROM qwen2.5-coder:14b\nPARAMETER num_ctx 16384\n" > /tmp/Mf && ollama create qwen2.5-coder:14b-16k -f /tmp/Mf'
 ```
 
 ### 4. Start OpenClaw
@@ -52,8 +63,8 @@ docker compose restart openclaw
 ### 6. Configure Ollama as provider
 
 ```bash
-docker compose exec openclaw openclaw config set models.providers.ollama '{"baseUrl":"http://ollama:11434","apiKey":"ollama-local","api":"ollama","models":[{"id":"qwen2.5:7b","name":"qwen2.5:7b"}]}'
-docker compose exec openclaw openclaw config set agents.defaults.model "ollama/qwen2.5:7b"
+docker compose exec openclaw openclaw config set models.providers.ollama '{"baseUrl":"http://ollama:11434","apiKey":"ollama-local","api":"ollama","models":[{"id":"deepseek-r1:14b-16k","name":"DeepSeek R1 14b"},{"id":"qwen2.5-coder:14b-16k","name":"Qwen2.5 Coder 14b"}]}'
+docker compose exec openclaw openclaw config set agents.defaults.model "ollama/deepseek-r1:14b-16k"
 docker compose restart openclaw
 ```
 
@@ -89,7 +100,7 @@ docker compose exec openclaw openclaw config set channels.telegram.allowFrom '["
 docker compose restart openclaw
 ```
 
-Send a message to your bot — it should respond using qwen2.5:7b.
+Send a message to your bot — it should respond using deepseek-r1:14b.
 
 ---
 
@@ -121,7 +132,7 @@ docker compose exec openclaw git config --global user.email "your@email.com"
 
 ### 4. Configure monitored repositories
 
-Edit `skills/github-issue-fixer/SKILL.md` — replace `OWNER/REPO` placeholders with actual repos.
+Edit `skills/github-issue-fixer/SKILL.md` — update the repositories list under "Configured repositories".
 
 ### 5. Register cron job (nightly runs)
 
@@ -139,9 +150,13 @@ docker compose exec openclaw openclaw skills check
 
 ---
 
+## Control UI
+
+- **URL:** http://127.0.0.1:18789/
+- **Token:** stored in `.env` as `OPENCLAW_GATEWAY_TOKEN`
+
 ## Usage
 
-- **Control UI:** http://127.0.0.1:18789/
 - **Logs:** `docker compose logs -f`
 - **Stop:** `docker compose down`
 - **Restart:** `docker compose restart`
