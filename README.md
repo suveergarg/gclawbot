@@ -93,6 +93,52 @@ Send a message to your bot — it should respond using qwen2.5:7b.
 
 ---
 
+## GitHub Integration (for github-issue-fixer skill)
+
+### 1. Enable openshell plugin
+
+```bash
+docker compose exec openclaw openclaw plugins enable openshell
+docker compose restart openclaw
+```
+
+### 2. Authenticate gh CLI (one-time, interactive)
+
+```bash
+docker compose exec -it openclaw gh auth login
+```
+
+Select: `GitHub.com` → `HTTPS` → `Login with a web browser` → follow prompts.
+
+Token stored in `./data/openclaw/.config/gh/` — persists across restarts. Re-run after fresh clone.
+
+### 3. Configure git identity
+
+```bash
+docker compose exec openclaw git config --global user.name "Your Name"
+docker compose exec openclaw git config --global user.email "your@email.com"
+```
+
+### 4. Configure monitored repositories
+
+Edit `skills/github-issue-fixer/SKILL.md` — replace `OWNER/REPO` placeholders with actual repos.
+
+### 5. Register cron job (nightly runs)
+
+```bash
+./scripts/setup-cron.sh
+```
+
+### 6. Verify
+
+```bash
+docker compose exec openclaw gh auth status
+docker compose exec openclaw gh repo list --limit 3
+docker compose exec openclaw openclaw skills check
+```
+
+---
+
 ## Usage
 
 - **Control UI:** http://127.0.0.1:18789/
