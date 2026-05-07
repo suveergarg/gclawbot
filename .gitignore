@@ -2,7 +2,7 @@
 .env.local
 .env.*.local
 openclaw.json
-scripts/
+scripts/docker/
 *.log
 .DS_Store
 data/
