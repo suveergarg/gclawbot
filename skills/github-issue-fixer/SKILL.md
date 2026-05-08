@@ -1,7 +1,7 @@
 ---
 name: github-issue-fixer
 description: Monitor GitHub repositories for open issues, attempt to fix them, and open a PR on the user's fork for review. Use when asked to fix GitHub issues, work on open issues, or contribute to repos.
-model: ollama/qwen2.5-coder:14b-16k
+model: ollama/qwen3:14b
 ---
 
 # GitHub Issue Fixer
