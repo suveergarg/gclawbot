@@ -1,6 +1,6 @@
 # gclawbot
 
-AI agent bot running OpenClaw + Ollama on GPU, connected to Telegram.
+AI agent bot running OpenClaw + Ollama on GPU, connected to Signal.
 
 **Models:**
 - `deepseek-r1:14b` — default for conversations (16k context)
@@ -53,10 +53,10 @@ docker compose exec ollama bash -c 'printf "FROM qwen2.5-coder:14b\nPARAMETER nu
 docker compose up -d
 ```
 
-### 5. Enable Telegram plugin
+### 5. Enable Signal plugin
 
 ```bash
-docker compose exec openclaw openclaw plugins enable telegram
+docker compose exec openclaw openclaw plugins enable signal
 docker compose restart openclaw
 ```
 
@@ -68,39 +68,54 @@ docker compose exec openclaw openclaw config set agents.defaults.model "ollama/d
 docker compose restart openclaw
 ```
 
-### 7. Create Telegram bot
+### 7. Link signal-cli to your Signal account
 
-1. Open Telegram → search `@BotFather` → send `/newbot`
-2. Follow prompts to get a bot token (format: `1234567890:ABCdef...`)
-
-### 8. Add Telegram bot to OpenClaw
+signal-cli runs as a linked device on your existing Signal account.
 
 ```bash
-docker compose exec openclaw openclaw channels add --channel telegram --token "YOUR_BOT_TOKEN"
+# Get the QR code link to scan with your Signal app
+docker compose exec signal-cli signal-cli --config /home/.local/share/signal-cli link -n "gclawbot"
+```
+
+This prints a `sgnl://linkdevice?...` URI. Convert it to a QR code:
+
+```bash
+# On your machine (not in container), install qrencode if needed:
+sudo apt install qrencode
+# Then:
+qrencode -t ansiutf8 'sgnl://linkdevice?...'
+```
+
+Scan the QR code from Signal on your phone: **Settings → Linked Devices → Link New Device**.
+
+### 8. Add Signal channel to OpenClaw
+
+```bash
+docker compose exec openclaw openclaw channels add --channel signal \
+  --signal-number "+1XXXXXXXXXX" \
+  --http-host signal-cli \
+  --http-port 8080
 docker compose restart openclaw
 ```
 
-### 9. Pair your Telegram account
+### 9. Pair your Signal account
 
-1. Open Telegram → search your bot username → send `/start`
-2. Bot replies with a pairing code — approve it:
+Send any message to yourself (the linked number) — OpenClaw intercepts it and replies with a pairing code:
 
 ```bash
-docker compose exec openclaw openclaw pairing list telegram
-docker compose exec openclaw openclaw pairing approve telegram <CODE>
+docker compose exec openclaw openclaw pairing list signal
+docker compose exec openclaw openclaw pairing approve signal <CODE>
 ```
 
-The approval output shows your numeric Telegram user ID.
-
-### 10. Lock bot to your account only
+### 10. Lock to your account only
 
 ```bash
-docker compose exec openclaw openclaw config set channels.telegram.dmPolicy allowlist
-docker compose exec openclaw openclaw config set channels.telegram.allowFrom '["YOUR_NUMERIC_ID"]'
+docker compose exec openclaw openclaw config set channels.signal.dmPolicy allowlist
+docker compose exec openclaw openclaw config set channels.signal.allowFrom '["+1XXXXXXXXXX"]'
 docker compose restart openclaw
 ```
 
-Send a message to your bot — it should respond using deepseek-r1:14b.
+Send a message to yourself on Signal — OpenClaw responds using deepseek-r1:14b.
 
 ---
 

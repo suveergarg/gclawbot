@@ -22,6 +22,35 @@ services:
       retries: 10
       start_period: 90s
 
+  ollama-init:
+    image: ollama/ollama
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./scripts/ollama-init.sh:/ollama-init.sh:ro
+    entrypoint: ["/bin/bash", "/ollama-init.sh"]
+    networks:
+      - openclaw_net
+    restart: "no"
+
+  signal-cli:
+    image: bbernhard/signal-cli-rest-api:latest
+    environment:
+      - MODE=native
+    volumes:
+      - signal_cli_data:/home/.local/share/signal-cli
+    networks:
+      - openclaw_net
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   openclaw:
     build:
       context: .
@@ -30,11 +59,14 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+      signal-cli:
+        condition: service_started
     ports:
       - "127.0.0.1:18789:18789"
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /home/node/.openclaw/skills && cp -r /skills-src/. /home/node/.openclaw/skills/ && exec docker-entrypoint.sh node openclaw.mjs gateway --allow-unconfigured"]
     volumes:
       - ./data/openclaw:/home/node
-      - ./skills:/home/node/.openclaw/skills:ro
+      - ./skills:/skills-src:ro
     environment:
       - OPENCLAW_HOME_VOLUME=1
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
@@ -50,6 +82,7 @@ services:
 
 volumes:
   ollama_data:
+  signal_cli_data:
 
 networks:
   openclaw_net:
